@@ -56,7 +56,7 @@
     (format #t "├~77,,'─t┤~%")
     (format #t "│  Zwischenbilanz ~77t│ ~%")
     (print-column-header)
-    (format #t "│ [~5d] ~v_[~4d-~2,'0d] ~v_~11,2,h ~v_~11,2,h ~v_~12,2,h ~77t│ ~%" 
+    (format #t "│ ∑~5d ~v_[~4d-~2,'0d] ~v_~11,2,h ~v_~11,2,h ~v_~12,2,h ~77t│ ~%" 
             items 
             3 (car start) (car (cdr start))
             4 subtotal-interest 
@@ -69,7 +69,7 @@
     (format #t "┌~77,,'─t┐~%")
     (format #t "│  Gesamtbilanz ~77t│ ~%")
     (print-column-header)
-    (format #t "│ [~5d] ~v_[~4d-~2,'0d] ~v_~11,2,h ~v_~11,2,h ~v_~12,2,h ~77t│ ~%" 
+    (format #t "│ ∑~5d ~v_[~4d-~2,'0d] ~v_~11,2,h ~v_~11,2,h ~v_~12,2,h ~77t│ ~%" 
             total-rates 
             3 (car start) (car (cdr start))
             4 total-interest 
