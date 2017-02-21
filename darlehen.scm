@@ -1,5 +1,5 @@
 (setlocale LC_ALL "de_DE.UTF-8")
-(use-modules (ice-9 format) (ice-9 i18n))
+(use-modules (srfi srfi-9) (ice-9 format) (ice-9 i18n))
 (define total-rates 0)
 (define total-interest 0)
 (define total-redemption 0)
@@ -136,6 +136,17 @@
             
 (define header-verbose #t)
 (define monthly-verbose #t)
+(define-record-type <loan>
+                    (make-loan rate scheduled-repay interest runtime amount)
+                    loan?
+                    (rate loan-rate)
+                    (scheduled-repay loan-scheduled-repay)
+                    (interest loan-interest)
+                    (runtime loan-runtime)
+                    (amount loan-amount set-loan-amount!))
+
+(define initial (make-loan 725 '(4500 . 3) 3.7 (+ (* 8 12) 3) 100000))
+
 (define first `((rate . 725)
                 (repay . (4500 . 3))
                 (interest . 3.7)
