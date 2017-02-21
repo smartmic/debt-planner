@@ -1,43 +1,52 @@
 (setlocale LC_ALL "de_DE.UTF-8")
-(use-modules (ice-9 format))
+(use-modules (ice-9 format) (ice-9 i18n))
 (define total-rates 0)
 (define total-interest 0)
 (define total-redemption 0)
 (define open-dept 0)
 (define start (list 2011 11))
-(define months '((01 . Januar)
-                (02 . Februar)
-                (03 . März)
-                (04 . April)
-                (05 . Mai)
-                (06 . Juni)
-                (07 . Juli)
-                (08 . August)
-                (09 . September)
-                (10 . Oktober)
-                (11 . November)
-                (12 . Dezember)))
 (set! start (list (car start) (car (cdr start)) ))
+
+(define _loan (gettext "Darlehen über"))
+(define _runtime (gettext "Laufzeitbeginn zum 1. des Monats"))
+(define _annual-interest (gettext "Sollzinssatz"))
+(define _effrate (gettext "Effektivzins"))
+(define _srepay (gettext "Sondertilgung p.a. im"))
+(define _value (gettext "in Höhe von"))
+(define _subtotal (gettext "Zwischenbilanz"))
+(define _total (gettext "Gesamtbilanz"))
+(define _rate (gettext "Rate"))
+(define _eom (gettext "Monatsende"))
+(define _interest (gettext "Zinsen"))
+(define _repay (gettext "Tilgung"))
+(define _rest (gettext "Restschuld"))
+
 
 (define print-header 
   (lambda (loan interest repay)
     (let ([z (/ (/ interest 100) 12)])
       (format #t "┌~77,,'─t┐~%")
-      (format #t "│  Darlehen über ~v_~10,2h EUR   │~%" 43 loan)
-      (format #t "│  Laufzeitbeginn zum 1. des Monats ~v_~10d-~2,'0d   │~%" 
-              25 (car start) (car (cdr start)))
-      (format #t "│  Sollzinssatz ~v_~3,2f %   │~%" 52 interest)
-      (format #t "│  Effektivzins p.a. ~v_~3,2f %   │~%" 
+
+      (format #t "│  ~a ~v_~10,2h ~a   │~%" _loan 42 loan
+              (locale-currency-symbol #t))
+
+      (format #t "│  ~a ~v_~10d-~2,'0d   │~%" _runtime 26 (car start)
+              (car (cdr start)))
+
+      (format #t "│  ~a ~v_~3,2f %   │~%" _annual-interest 52 interest)
+      (format #t "│  ~a p.a. ~v_~3,2f %   │~%" _effrate 
               47 (* 100 (- (expt (+ 1 z) 12) 1)) )
+
       (if (> (car repay) 0)
-        (format #t "│  Sondertilgung p.a. im ~s in Höhe von ~v_~6,2h EUR   │~%" 
-                 (assq-ref months (cdr repay)) 22 (car repay))))))
+        (format #t "│  ~a ~a ~a ~v_~6,2h ~a   │~%" _srepay
+                (locale-month (cdr repay)) _value 22 (car repay)
+                (locale-currency-symbol #t) )))))
 
 (define print-column-header
   (lambda ()
       (format #t "├~77,,'─t┤~%")
-      (format #t "│ ~v_Rate~v_Monatsende~v_Zinsen~v_Tilgung~v_Restschuld   │~%"
-              2 3 11 10 9)
+      (format #t "│ ~v_~a~v_~a~v_~a~v_~a~v_~a   │~%"
+              2 _rate 3 _eom 11 _interest 10 _repay 9 _rest )
       (format #t "├~77,,'─t┤~%")))
 
 (define print-monthly
@@ -54,7 +63,7 @@
 (define print-subtotals
   (lambda (items loan subtotal-interest subtotal-redemption)
     (format #t "├~77,,'─t┤~%")
-    (format #t "│  Zwischenbilanz ~77t│ ~%")
+    (format #t "│  ~a ~77t│ ~%" _subtotal)
     (print-column-header)
     (format #t "│ ∑~5d ~v_[~4d-~2,'0d] ~v_~11,2,h ~v_~11,2,h ~v_~12,2,h ~77t│ ~%" 
             items 
@@ -67,7 +76,7 @@
 (define print-totals
   (lambda ()
     (format #t "┌~77,,'─t┐~%")
-    (format #t "│  Gesamtbilanz ~77t│ ~%")
+    (format #t "│  ~a ~77t│ ~%" _total)
     (print-column-header)
     (format #t "│ ∑~5d ~v_[~4d-~2,'0d] ~v_~11,2,h ~v_~11,2,h ~v_~12,2,h ~77t│ ~%" 
             total-rates 
