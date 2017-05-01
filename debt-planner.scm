@@ -154,5 +154,4 @@
 (define initial (make-loan 725 '(4500 . 3) 3.7 (+ (* 8 12) 3) 100000))
 (define suite (make-loan 725 '(4500 . 3) 3.7 (+ (* 8 12) 3) (dept initial)))
 (dept suite)
-;(dept 100000 725 0.037 116)
-;(print-totals)
+(print-totals)
