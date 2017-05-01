@@ -21,6 +21,17 @@
 (define _repay (gettext "Tilgung"))
 (define _rest (gettext "Restschuld"))
 
+(define header-verbose #t)
+(define monthly-verbose #t)
+(define-record-type <loan>
+                    (make-loan rate scheduled-repay interest runtime amount)
+                    loan?
+                    (rate loan-rate)
+                    (scheduled-repay loan-scheduled-repay)
+                    (interest loan-interest)
+                    (runtime loan-runtime)
+                    (amount loan-amount set-loan-amount!))
+
 
 (define print-header 
   (lambda (loan interest repay)
@@ -30,7 +41,7 @@
       (format #t "│  ~a ~v_~10,2h ~a   │~%" _loan 42 loan
               (locale-currency-symbol #t))
 
-      (format #t "│  ~a ~v_~10d-~2,'0d   │~%" _runtime 26 (car start)
+      (format #t "│  ~a ~v_~10d-~2,'0d  │~%" _runtime 26 (car start)
               (car (cdr start)))
 
       (format #t "│  ~a ~v_~3,2f %   │~%" _annual-interest 52 interest)
@@ -38,7 +49,7 @@
               47 (* 100 (- (expt (+ 1 z) 12) 1)) )
 
       (if (> (car repay) 0)
-        (format #t "│  ~a ~a ~a ~v_~6,2h ~a   │~%" _srepay
+        (format #t "│  ~a ~a ~a ~v_~6,2h ~a  │~%" _srepay
                 (locale-month (cdr repay)) _value 22 (car repay)
                 (locale-currency-symbol #t) )))))
 
@@ -87,15 +98,18 @@
     (format #t "└~77,,'─t┘~%")))
 
 (define dept 
-  (lambda (quasi-rent repay interest laufzeit loan)
-    (let ([z (/ (/ interest 100) 12)] [n 0] [subtotal-interest 0] [subtotal-redemption 0])
-      (if header-verbose (print-header loan interest repay))
+  (lambda (inquiry)
+    (let ([z (/ (/ (loan-interest inquiry) 100) 12)] [n 0] [subtotal-interest 0] [subtotal-redemption 0])
+      (if header-verbose (print-header 
+                           (loan-amount inquiry) 
+                           (loan-interest inquiry)
+                           (loan-scheduled-repay inquiry)))
       (if monthly-verbose (print-column-header))
           (let ret (
                 [p 0] 
                 [i 0] 
                 [t 0]
-                [l loan] )
+                [l (loan-amount inquiry)] )
             (set! start (list 
                           (if (= 12 (car (cdr start))) 
                             (+ 1 (car start)) 
@@ -104,67 +118,41 @@
                             (+ 1 (modulo (car (cdr start)) 12))
                             (- (car (cdr start)) 1))))
             (if monthly-verbose  (print-monthly p l i t))
-            (if (or (> p laufzeit) (< l 0))
+            (if (or (> p (loan-runtime inquiry)) (< l 0))
               0
               (ret (+ p 1)
                    (* l z)
                    (min 
                      (+ 
-                   (if (= (cdr repay) (+ (car (cdr start)) 1)) (car repay) 0) 
-                   (- quasi-rent (* l z))) l)
+                       (if (= (cdr (loan-scheduled-repay inquiry)) 
+                          (+ (car (cdr start)) 1)) 
+                       (car (loan-scheduled-repay inquiry)) 0) 
+                     (- (loan-rate inquiry) (* l z))) 
+                     l)
                (- l 
                  (+
-                  (if (= (cdr repay) (+ (car (cdr start)) 1)) (car repay) 0) 
-                  (- quasi-rent (* l z))))))
+                  (if (= (cdr (loan-scheduled-repay inquiry)) (+ (car (cdr start)) 1)) (car (loan-scheduled-repay inquiry)) 0) 
+                  (- (loan-rate inquiry) (* l z))))))
             (set! n (+ n 1))
             (set! subtotal-interest (+ subtotal-interest i))
             (set! subtotal-redemption (+ subtotal-redemption t))
             (set! total-rates (+ total-rates 1))
             (set! total-interest (+ total-interest i))
             (set! total-redemption (+ total-redemption t)) )
-      (print-subtotals (- n 1) loan subtotal-interest subtotal-redemption)
+      (print-subtotals (- n 1) (loan-amount inquiry) subtotal-interest subtotal-redemption)
       (set! start (list 
                     (if (= 12 (car (cdr start))) 
                       (+ 1 (car start)) 
                       (car start)) 
                     (+ 1 (modulo (car (cdr start)) 12))))
       (set! total-rates (- total-rates 1))
-      (set! open-dept (- loan subtotal-redemption))
-      (- loan subtotal-redemption)
+      (set! open-dept (- (loan-amount inquiry) subtotal-redemption))
+      (- (loan-amount inquiry) subtotal-redemption)
     )))
 
             
-(define header-verbose #t)
-(define monthly-verbose #t)
-(define-record-type <loan>
-                    (make-loan rate scheduled-repay interest runtime amount)
-                    loan?
-                    (rate loan-rate)
-                    (scheduled-repay loan-scheduled-repay)
-                    (interest loan-interest)
-                    (runtime loan-runtime)
-                    (amount loan-amount set-loan-amount!))
-
 (define initial (make-loan 725 '(4500 . 3) 3.7 (+ (* 8 12) 3) 100000))
-
-(define first `((rate . 725)
-                (repay . (4500 . 3))
-                (interest . 3.7)
-                (runtime . ,(+ (* 8 12) 3))
-                (loan . 100000)))
-
-(define second '((rate . 725)
-                (repay . (0 . 3))
-                (interest . 3.73)
-                (runtime . 999)))
+(define suite (make-loan 725 '(4500 . 3) 3.7 (+ (* 8 12) 3) (dept initial)))
+(dept suite)
 ;(dept 100000 725 0.037 116)
-(dept (assq-ref second 'rate)
-      (assq-ref second 'repay)
-      (assq-ref second 'interest)
-      (assq-ref second 'runtime)
-      (dept (assq-ref first 'rate)
-            (assq-ref first 'repay)
-            (assq-ref first 'interest)
-            (assq-ref first 'runtime)
-            (assq-ref first 'loan )) )
-(print-totals)
+;(print-totals)
