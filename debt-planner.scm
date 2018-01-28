@@ -31,7 +31,15 @@
                     (interest loan-interest)
                     (runtime loan-runtime)
                     (amount loan-amount set-loan-amount!))
-
+(define-record-type <balance>
+                    (make-balance periods year month total-interest total-redemption open-dept)
+                    balance?
+                    (periods balance-periods)
+                    (year balance-year)
+                    (month balance-month)
+                    (total-interest balance-total-interest)
+                    (total-redemption balance-total-redemption)
+                    (open-dept balance-open-dept))
 
 (define print-header 
   (lambda (loan interest repay)
@@ -147,11 +155,5 @@
                     (+ 1 (modulo (car (cdr start)) 12))))
       (set! total-rates (- total-rates 1))
       (set! open-dept (- (loan-amount inquiry) subtotal-redemption))
-      (- (loan-amount inquiry) subtotal-redemption)
+      (make-balance (- n 1) (car start) (car (cdr start)) total-interest total-redemption open-dept)
     )))
-
-            
-(define initial (make-loan 725 '(4500 . 3) 3.7 (+ (* 8 12) 3) 100000))
-(define suite (make-loan 725 '(4500 . 3) 3.7 (+ (* 8 12) 3) (dept initial)))
-(dept suite)
-(print-totals)
